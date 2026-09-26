@@ -34,10 +34,14 @@ export default function Home() {
       formData.append("image", await downscaleImage(file));
       const data = await analyzeRelic(formData);
       setState({ status: "result", data });
-    } catch {
+    } catch (err) {
+      const detail =
+        process.env.NODE_ENV !== "production" && err instanceof Error
+          ? ` (${err.message})`
+          : "";
       setState({
         status: "error",
-        message: "No se pudo analizar la reliquia. Inténtalo de nuevo.",
+        message: `No se pudo analizar la reliquia. Inténtalo de nuevo.${detail}`,
       });
     }
   }
