@@ -1,6 +1,6 @@
 "use server";
 
-import { GoogleGenAI, createPartFromBase64 } from "@google/genai";
+import { ApiError, GoogleGenAI, createPartFromBase64 } from "@google/genai";
 
 const CATEGORIES = [
   "Criatura",
@@ -63,34 +63,56 @@ export async function analyzeRelic(formData: FormData): Promise<RelicAnalysis> {
     throw new Error("Falta GEMINI_API_KEY.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const base64 = Buffer.from(await image.arrayBuffer()).toString("base64");
-
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || "gemini-flash-latest",
-    contents: [
-      {
-        role: "user",
-        parts: [
-          createPartFromBase64(base64, image.type || "image/jpeg"),
-          { text: "Registra esta entrada del Compendio." },
-        ],
-      },
-    ],
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      responseMimeType: "application/json",
-      responseJsonSchema: RESPONSE_SCHEMA,
-      temperature: 0.8,
-      abortSignal: AbortSignal.timeout(15_000),
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      retryOptions: { attempts: 2, initialDelay: 0.5, maxDelay: 2, httpStatusCodes: [429, 500, 503] },
     },
   });
+  const base64 = Buffer.from(await image.arrayBuffer()).toString("base64");
+  const deadline = AbortSignal.timeout(25_000);
+  const models = [
+    process.env.GEMINI_MODEL || "gemini-flash-latest",
+    process.env.GEMINI_FALLBACK_MODEL || "gemini-flash-lite-latest",
+  ];
 
-  if (!response.text) {
-    throw new Error("La Tableta no obtuvo respuesta.");
+  let lastError: unknown;
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [
+          {
+            role: "user",
+            parts: [
+              createPartFromBase64(base64, image.type || "image/jpeg"),
+              { text: "Registra esta entrada del Compendio." },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: "application/json",
+          responseJsonSchema: RESPONSE_SCHEMA,
+          temperature: 0.8,
+          abortSignal: deadline,
+        },
+      });
+
+      if (!response.text) {
+        throw new Error("La Tableta no obtuvo respuesta.");
+      }
+      return normalize(JSON.parse(response.text));
+    } catch (error) {
+      lastError = error;
+      // Only a saturated/rate-limited model is worth trying the fallback for.
+      if (!(error instanceof ApiError && [429, 500, 503].includes(error.status))) {
+        throw error;
+      }
+      console.warn(`Gemini ${model} no disponible (${error.status}), probando el siguiente modelo.`);
+    }
   }
-
-  return normalize(JSON.parse(response.text));
+  throw lastError;
 }
 
 function normalize(raw: Partial<RelicAnalysis>): RelicAnalysis {
