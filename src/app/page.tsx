@@ -45,7 +45,7 @@ export default function Home() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-sheikah-void px-6 py-12 text-sheikah-cyan">
-      <BackgroundGrid />
+      <TopographicBackground />
 
       <input
         ref={fileInputRef}
@@ -74,15 +74,17 @@ export default function Home() {
   );
 }
 
-function BackgroundGrid() {
+function TopographicBackground() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 opacity-20"
+      className="pointer-events-none absolute inset-0 opacity-40"
       style={{
-        backgroundImage:
-          "linear-gradient(rgba(127,231,242,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(127,231,242,0.15) 1px, transparent 1px)",
-        backgroundSize: "36px 36px",
+        backgroundImage: [
+          "repeating-radial-gradient(circle at 20% 30%, transparent 0, transparent 26px, rgba(0,221,255,0.16) 26px, rgba(0,221,255,0.16) 27px)",
+          "repeating-radial-gradient(circle at 80% 65%, transparent 0, transparent 34px, rgba(0,221,255,0.14) 34px, rgba(0,221,255,0.14) 35px)",
+          "repeating-radial-gradient(circle at 50% 95%, transparent 0, transparent 42px, rgba(0,221,255,0.12) 42px, rgba(0,221,255,0.12) 43px)",
+        ].join(", "),
         maskImage:
           "radial-gradient(circle at center, black, transparent 75%)",
       }}
@@ -92,7 +94,7 @@ function BackgroundGrid() {
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative rounded-2xl border border-sheikah-cyan/40 bg-sheikah-panel/40 p-8 text-center shadow-[0_0_35px_rgba(127,231,242,0.15)] backdrop-blur-md">
+    <div className="relative rounded-2xl border border-sheikah-cyan/40 bg-sheikah-panel/40 p-8 text-center shadow-sheikah backdrop-blur-md">
       <CornerBrackets />
       {children}
     </div>
@@ -134,10 +136,10 @@ function IdleView({ onEyeClick }: { onEyeClick: () => void }) {
           whileTap={{ scale: 0.95 }}
           animate={{ opacity: [0.75, 1, 0.75] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-2 border-sheikah-cyan bg-sheikah-cyan/10 text-sheikah-cyan shadow-[0_0_25px_rgba(127,231,242,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sheikah-gold"
+          className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-2 border-sheikah-cyan bg-sheikah-cyan/10 text-sheikah-cyan shadow-sheikah focus:outline-none focus-visible:ring-2 focus-visible:ring-sheikah-gold"
           aria-label="Escanear reliquia"
         >
-          <SheikahEyeIcon className="h-16 w-16" />
+          <SheikahEyeIcon className="h-16 w-16 drop-shadow-[0_0_6px_rgba(0,221,255,0.8)]" />
         </motion.button>
 
         <p className="mt-8 text-sm tracking-wide text-sheikah-cyan/80">
@@ -165,7 +167,7 @@ function AnalyzingView() {
         <div className="relative mx-auto mt-6 h-32 w-32">
           <div className="absolute inset-0 animate-pulse-glow rounded-full border-2 border-sheikah-cyan" />
           <div className="absolute inset-0 flex items-center justify-center text-sheikah-cyan">
-            <SheikahEyeIcon className="h-16 w-16" />
+            <SheikahEyeIcon className="h-16 w-16 drop-shadow-[0_0_6px_rgba(0,221,255,0.8)]" />
           </div>
           <div className="absolute inset-0 overflow-hidden rounded-full">
             <div className="absolute left-0 right-0 h-8 animate-scan-sweep bg-gradient-to-b from-transparent via-sheikah-cyan/60 to-transparent" />
@@ -291,14 +293,14 @@ function HeartsRestored({ hearts }: { hearts: number }) {
 
 function HeartIcon({ variant }: { variant: "full" | "half" | "empty" }) {
   if (variant === "empty") {
-    return <span className="text-lg text-sheikah-cyan/30">♥</span>;
+    return <span className="text-lg leading-none text-sheikah-inactive">♥</span>;
   }
   if (variant === "half") {
     return (
       <span className="relative inline-block text-lg leading-none">
-        <span className="text-sheikah-cyan/30">♥</span>
+        <span className="text-sheikah-inactive">♥</span>
         <span
-          className="absolute inset-0 overflow-hidden text-red-400"
+          className="absolute inset-0 overflow-hidden text-sheikah-cyan drop-shadow-[0_0_4px_rgba(0,221,255,0.7)]"
           style={{ clipPath: "inset(0 50% 0 0)" }}
         >
           ♥
@@ -306,5 +308,9 @@ function HeartIcon({ variant }: { variant: "full" | "half" | "empty" }) {
       </span>
     );
   }
-  return <span className="text-lg leading-none text-red-400">♥</span>;
+  return (
+    <span className="text-lg leading-none text-sheikah-cyan drop-shadow-[0_0_4px_rgba(0,221,255,0.7)]">
+      ♥
+    </span>
+  );
 }

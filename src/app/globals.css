@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-sheikah-cyan: #7fe7f2;
-  --color-sheikah-cyan-dim: #2b8fa0;
+  --color-sheikah-cyan: #00ddff;
+  --color-sheikah-cyan-dim: #0a7d94;
   --color-sheikah-gold: #e8c25a;
-  --color-sheikah-void: #05131a;
-  --color-sheikah-panel: #0d2530;
+  --color-sheikah-void: #1b1e23;
+  --color-sheikah-panel: #23272e;
+  --color-sheikah-inactive: #4a4f58;
+
+  --shadow-sheikah:
+    inset 0 0 22px rgba(0, 221, 255, 0.18), 0 0 16px rgba(0, 221, 255, 0.12);
 
   --animate-scan-sweep: scan-sweep 2.4s linear infinite;
   --animate-pulse-glow: pulse-glow 1.8s ease-in-out infinite;
