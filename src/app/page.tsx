@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { analyzeRelic, type RelicAnalysis } from "./actions";
-import { SheikahEyeIcon } from "@/components/sheikah-eye-icon";
+import { SheikahEmblemIcon } from "@/components/sheikah-emblem-icon";
 
 type ScanState =
   | { status: "idle" }
@@ -55,7 +55,7 @@ export default function Home() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-sheikah-void px-6 py-12 text-sheikah-cyan">
-      <TopographicBackground />
+      <SheikahBackground />
 
       <DesktopNotice />
 
@@ -94,45 +94,46 @@ export default function Home() {
   );
 }
 
-function TopographicBackground() {
+function SheikahBackground() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       {/* resplandor central para dar profundidad detrás del panel */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(0,221,255,0.10),transparent_55%)]" />
 
-      {/* curvas topográficas deformadas con ruido, en deriva lenta */}
-      <svg
-        className="absolute -inset-[10%] h-[120%] w-[120%] animate-drift opacity-60"
-        style={{ mixBlendMode: "screen" }}
-      >
+      {/* grilla de motivos rúnicos + runas dispersas, en deriva lenta */}
+      <svg className="absolute -inset-[10%] h-[120%] w-[120%] animate-drift opacity-70">
         <defs>
-          <filter id="topo-warp" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.01 0.014"
-              numOctaves={2}
-              seed={7}
-              result="noise"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale={70}
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-          <pattern id="topo-rings" width="160" height="160" patternUnits="userSpaceOnUse">
-            <circle cx="80" cy="80" r="18" fill="none" stroke="rgba(0,221,255,0.4)" strokeWidth="1" />
-            <circle cx="80" cy="80" r="38" fill="none" stroke="rgba(0,221,255,0.32)" strokeWidth="1" />
-            <circle cx="80" cy="80" r="58" fill="none" stroke="rgba(0,221,255,0.24)" strokeWidth="1" />
-            <circle cx="80" cy="80" r="78" fill="none" stroke="rgba(0,221,255,0.16)" strokeWidth="1" />
-            <circle cx="0" cy="0" r="30" fill="none" stroke="rgba(0,221,255,0.22)" strokeWidth="1" />
-            <circle cx="160" cy="160" r="26" fill="none" stroke="rgba(0,221,255,0.18)" strokeWidth="1" />
+          <pattern id="sheikah-motif" width="56" height="56" patternUnits="userSpaceOnUse">
+            <circle cx="28" cy="28" r="7" fill="none" stroke="rgba(0,221,255,0.14)" strokeWidth="1" />
+            <circle cx="28" cy="28" r="2" fill="rgba(0,221,255,0.1)" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#topo-rings)" filter="url(#topo-warp)" />
+        <rect width="100%" height="100%" fill="url(#sheikah-motif)" />
+
+        {/* runas dispersas, angulares e irregulares */}
+        <g stroke="rgba(0,221,255,0.16)" strokeWidth="1.2" fill="none">
+          <path d="M120,90 l10,-14 l10,4 M125,90 v16" />
+          <path d="M540,220 l8,-10 M540,220 l8,6 M540,220 v-14" />
+          <path d="M260,420 h16 M268,412 v16 M260,428 l16,-16" />
+          <path d="M620,480 l-6,-12 l12,-2 l-2,14 Z" />
+          <path d="M90,560 h14 M97,552 v16" />
+          <path d="M460,60 l10,10 M470,60 l-10,10" />
+          <path d="M320,650 h18 M329,642 v18" />
+        </g>
       </svg>
+
+      {/* textura fina de líneas verticales */}
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, rgba(0,221,255,0.05) 0px, transparent 1px, transparent 3px)",
+        }}
+      />
+
+      {/* barras de brillo en los bordes */}
+      <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-sheikah-cyan/50 to-transparent blur-[2px]" />
+      <div className="absolute inset-y-0 right-0 w-3 bg-gradient-to-l from-sheikah-cyan/50 to-transparent blur-[2px]" />
 
       {/* viñeta hacia los bordes para dar profundidad cinematográfica */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.55)_100%)]" />
@@ -194,10 +195,10 @@ function IdleView({ onEyeClick }: { onEyeClick: () => void }) {
           whileTap={{ scale: 0.95 }}
           animate={{ opacity: [0.75, 1, 0.75] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border-2 border-sheikah-cyan bg-sheikah-cyan/10 text-sheikah-cyan shadow-sheikah focus:outline-none focus-visible:ring-2 focus-visible:ring-sheikah-gold"
+          className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-sheikah-cyan/10 text-sheikah-cyan shadow-sheikah focus:outline-none focus-visible:ring-2 focus-visible:ring-sheikah-gold"
           aria-label="Escanear reliquia"
         >
-          <SheikahEyeIcon className="h-16 w-16 drop-shadow-[0_0_6px_rgba(0,221,255,0.8)]" />
+          <SheikahEmblemIcon className="h-28 w-28 drop-shadow-[0_0_6px_rgba(0,221,255,0.8)]" />
         </motion.button>
 
         <p className="mt-8 text-sm tracking-wide text-sheikah-cyan/80">
@@ -364,9 +365,9 @@ function AnalyzingView() {
         </p>
 
         <div className="relative mx-auto mt-6 h-32 w-32">
-          <div className="absolute inset-0 animate-pulse-glow rounded-full border-2 border-sheikah-cyan" />
+          <div className="absolute inset-0 animate-pulse-glow rounded-full bg-sheikah-cyan/10 blur-md" />
           <div className="absolute inset-0 flex items-center justify-center text-sheikah-cyan">
-            <SheikahEyeIcon className="h-16 w-16 drop-shadow-[0_0_6px_rgba(0,221,255,0.8)]" />
+            <SheikahEmblemIcon className="h-28 w-28 drop-shadow-[0_0_6px_rgba(0,221,255,0.8)]" />
           </div>
           <div className="absolute inset-0 overflow-hidden rounded-full">
             <div className="absolute left-0 right-0 h-8 animate-scan-sweep bg-gradient-to-b from-transparent via-sheikah-cyan/60 to-transparent" />
