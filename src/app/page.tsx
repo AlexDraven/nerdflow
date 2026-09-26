@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { analyzeRelic, type RelicAnalysis } from "./actions";
 import { SheikahEyeIcon } from "@/components/sheikah-eye-icon";
 
 type ScanState =
   | { status: "idle" }
+  | { status: "camera" }
   | { status: "analyzing" }
   | { status: "result"; data: RelicAnalysis }
   | { status: "error"; message: string };
@@ -16,13 +17,17 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleEyeClick() {
-    fileInputRef.current?.click();
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.mediaDevices?.getUserMedia === "function"
+    ) {
+      setState({ status: "camera" });
+    } else {
+      fileInputRef.current?.click();
+    }
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  async function analyzeFile(file: File) {
     setState({ status: "analyzing" });
     try {
       const formData = new FormData();
@@ -34,9 +39,14 @@ export default function Home() {
         status: "error",
         message: "No se pudo analizar la reliquia. Inténtalo de nuevo.",
       });
-    } finally {
-      e.target.value = "";
     }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await analyzeFile(file);
+    e.target.value = "";
   }
 
   function handleReset() {
@@ -62,6 +72,14 @@ export default function Home() {
         <AnimatePresence mode="wait">
           {state.status === "idle" && (
             <IdleView key="idle" onEyeClick={handleEyeClick} />
+          )}
+          {state.status === "camera" && (
+            <CameraView
+              key="camera"
+              onCapture={analyzeFile}
+              onCancel={handleReset}
+              onFallbackToFile={() => fileInputRef.current?.click()}
+            />
           )}
           {state.status === "analyzing" && <AnalyzingView key="analyzing" />}
           {state.status === "result" && (
@@ -186,6 +204,147 @@ function IdleView({ onEyeClick }: { onEyeClick: () => void }) {
           Toca el Ojo Sheikah para fotografiar un objeto y descubrir su
           historia.
         </p>
+      </Panel>
+    </motion.div>
+  );
+}
+
+function CameraView({
+  onCapture,
+  onCancel,
+  onFallbackToFile,
+}: {
+  onCapture: (file: File) => void;
+  onCancel: () => void;
+  onFallbackToFile: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setReady(false);
+    setError(null);
+
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false })
+      .then((stream) => {
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError("Sin acceso a la cámara.");
+      });
+
+    return () => {
+      cancelled = true;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+  }, [attempt]);
+
+  function handleCapture() {
+    const video = videoRef.current;
+    if (!video || !ready) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob(
+      (blob) => {
+        if (blob) onCapture(new File([blob], "reliquia.jpg", { type: "image/jpeg" }));
+      },
+      "image/jpeg",
+      0.9,
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.35 }}
+    >
+      <Panel>
+        <p className="mb-4 text-xs uppercase tracking-[0.3em] text-sheikah-gold">
+          Tableta Sheikah
+        </p>
+
+        {error ? (
+          <div className="flex flex-col items-center gap-4 py-6">
+            <p className="text-sm text-sheikah-cyan/80">{error}</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setAttempt((a) => a + 1)}
+                className="rounded-full border border-sheikah-cyan/60 px-4 py-2 text-xs uppercase tracking-[0.2em] text-sheikah-cyan hover:bg-sheikah-cyan/10"
+              >
+                Reintentar
+              </button>
+              <button
+                type="button"
+                onClick={onFallbackToFile}
+                className="rounded-full border border-sheikah-gold px-4 py-2 text-xs uppercase tracking-[0.2em] text-sheikah-gold hover:bg-sheikah-gold/10"
+              >
+                Usar selector de archivos
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-xl border border-sheikah-cyan/60 bg-black shadow-sheikah">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                onLoadedMetadata={() => setReady(true)}
+                className="h-full w-full object-cover"
+              />
+              <CornerBrackets />
+              {ready && (
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <div className="absolute left-0 right-0 h-10 animate-scan-sweep bg-gradient-to-b from-transparent via-sheikah-cyan/50 to-transparent" />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-center gap-6">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="text-xs uppercase tracking-[0.2em] text-sheikah-cyan/60 hover:text-sheikah-cyan"
+              >
+                Cancelar
+              </button>
+              <motion.button
+                type="button"
+                onClick={handleCapture}
+                disabled={!ready}
+                whileHover={ready ? { scale: 1.05 } : undefined}
+                whileTap={ready ? { scale: 0.95 } : undefined}
+                aria-label="Capturar reliquia"
+                className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-sheikah-cyan bg-sheikah-cyan/10 shadow-sheikah disabled:opacity-40"
+              >
+                <span className="h-10 w-10 rounded-full bg-sheikah-cyan" />
+              </motion.button>
+              <span className="w-[42px]" aria-hidden />
+            </div>
+          </>
+        )}
       </Panel>
     </motion.div>
   );
