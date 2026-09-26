@@ -13,6 +13,7 @@
 
   --animate-scan-sweep: scan-sweep 2.4s linear infinite;
   --animate-pulse-glow: pulse-glow 1.8s ease-in-out infinite;
+  --animate-drift: drift 50s ease-in-out infinite alternate;
 }
 
 @keyframes scan-sweep {
@@ -45,6 +46,15 @@
       0 0 28px 8px var(--color-sheikah-cyan),
       inset 0 0 20px var(--color-sheikah-cyan);
     opacity: 1;
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(-2.5%, -2%, 0) scale(1.06);
   }
 }
 

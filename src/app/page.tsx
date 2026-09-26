@@ -78,19 +78,47 @@ export default function Home() {
 
 function TopographicBackground() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 opacity-40"
-      style={{
-        backgroundImage: [
-          "repeating-radial-gradient(circle at 20% 30%, transparent 0, transparent 26px, rgba(0,221,255,0.16) 26px, rgba(0,221,255,0.16) 27px)",
-          "repeating-radial-gradient(circle at 80% 65%, transparent 0, transparent 34px, rgba(0,221,255,0.14) 34px, rgba(0,221,255,0.14) 35px)",
-          "repeating-radial-gradient(circle at 50% 95%, transparent 0, transparent 42px, rgba(0,221,255,0.12) 42px, rgba(0,221,255,0.12) 43px)",
-        ].join(", "),
-        maskImage:
-          "radial-gradient(circle at center, black, transparent 75%)",
-      }}
-    />
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* resplandor central para dar profundidad detrás del panel */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(0,221,255,0.10),transparent_55%)]" />
+
+      {/* curvas topográficas deformadas con ruido, en deriva lenta */}
+      <svg
+        className="absolute -inset-[10%] h-[120%] w-[120%] animate-drift opacity-60"
+        style={{ mixBlendMode: "screen" }}
+      >
+        <defs>
+          <filter id="topo-warp" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.01 0.014"
+              numOctaves={2}
+              seed={7}
+              result="noise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale={70}
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+          <pattern id="topo-rings" width="160" height="160" patternUnits="userSpaceOnUse">
+            <circle cx="80" cy="80" r="18" fill="none" stroke="rgba(0,221,255,0.4)" strokeWidth="1" />
+            <circle cx="80" cy="80" r="38" fill="none" stroke="rgba(0,221,255,0.32)" strokeWidth="1" />
+            <circle cx="80" cy="80" r="58" fill="none" stroke="rgba(0,221,255,0.24)" strokeWidth="1" />
+            <circle cx="80" cy="80" r="78" fill="none" stroke="rgba(0,221,255,0.16)" strokeWidth="1" />
+            <circle cx="0" cy="0" r="30" fill="none" stroke="rgba(0,221,255,0.22)" strokeWidth="1" />
+            <circle cx="160" cy="160" r="26" fill="none" stroke="rgba(0,221,255,0.18)" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#topo-rings)" filter="url(#topo-warp)" />
+      </svg>
+
+      {/* viñeta hacia los bordes para dar profundidad cinematográfica */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_35%,rgba(0,0,0,0.55)_100%)]" />
+    </div>
   );
 }
 
