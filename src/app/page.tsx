@@ -31,7 +31,7 @@ export default function Home() {
     setState({ status: "analyzing" });
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", await downscaleImage(file));
       const data = await analyzeRelic(formData);
       setState({ status: "result", data });
     } catch {
@@ -92,6 +92,23 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+// Los Server Actions aceptan hasta 1 MB por defecto; una foto de celular pesa varios.
+async function downscaleImage(file: File, maxSide = 1024): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.8),
+  );
+  if (!blob) throw new Error("No se pudo procesar la imagen.");
+  return new File([blob], "reliquia.jpg", { type: "image/jpeg" });
 }
 
 function SheikahBackground() {
@@ -402,7 +419,7 @@ function ResultView({
     >
       <Panel>
         <p className="mb-1 text-xs uppercase tracking-[0.3em] text-sheikah-gold">
-          ¡Reliquia Descubierta!
+          Compendio Nº {String(data.compendiumNumber).padStart(3, "0")}
         </p>
         <h2 className="mb-3 text-2xl font-semibold text-sheikah-cyan">
           {data.itemName}
@@ -414,12 +431,14 @@ function ResultView({
           {data.description}
         </p>
 
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <span className="text-xs uppercase tracking-[0.2em] text-sheikah-cyan/60">
-            Corazones
-          </span>
-          <HeartsRestored hearts={data.heartsRestored} />
-        </div>
+        {data.heartsRestored > 0 && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <span className="text-xs uppercase tracking-[0.2em] text-sheikah-cyan/60">
+              Corazones
+            </span>
+            <HeartsRestored hearts={data.heartsRestored} />
+          </div>
+        )}
 
         <motion.button
           type="button"
@@ -478,7 +497,7 @@ function CategoryBadge({ category }: { category: RelicAnalysis["category"] }) {
 
 function HeartsRestored({ hearts }: { hearts: number }) {
   const fullHearts = Math.floor(hearts);
-  const hasHalf = hearts % 1 >= 0.5 && hearts % 1 < 1;
+  const hasHalf = hearts % 1 > 0;
 
   return (
     <div className="flex items-center gap-1">
