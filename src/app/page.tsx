@@ -47,6 +47,8 @@ export default function Home() {
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-sheikah-void px-6 py-12 text-sheikah-cyan">
       <TopographicBackground />
 
+      <DesktopNotice />
+
       <input
         ref={fileInputRef}
         type="file"
@@ -89,6 +91,16 @@ function TopographicBackground() {
           "radial-gradient(circle at center, black, transparent 75%)",
       }}
     />
+  );
+}
+
+function DesktopNotice() {
+  return (
+    <div className="fixed inset-x-0 top-0 z-20 hidden justify-center px-4 py-3 md:flex">
+      <div className="flex items-center gap-2 rounded-full border border-sheikah-gold/50 bg-sheikah-panel/80 px-4 py-2 text-xs uppercase tracking-[0.15em] text-sheikah-gold shadow-sheikah backdrop-blur-md">
+        Para la mejor experiencia, abre la Tableta Sheikah desde tu celular
+      </div>
+    </div>
   );
 }
 
